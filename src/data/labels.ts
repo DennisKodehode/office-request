@@ -8,6 +8,9 @@ import { Poc_productspoc_category as CategoryMap } from '../generated/models/Poc
 // generated maps — keeping the human labels sourced from the generated data.
 
 export type OrderStatus = 893960000 | 893960001 | 893960002 | 893960003 | 893960004
+
+/** The "Submitted" status code — the only status a user may edit/cancel in. */
+export const STATUS_SUBMITTED: OrderStatus = 893960000
 export type ProductCategory =
   | 893960000
   | 893960001
@@ -56,3 +59,29 @@ export const ORDER_STATUS_FLOW: readonly OrderStatus[] = [
   893960002, // Assigned
   893960003, // Fulfilled
 ]
+
+/**
+ * Allowed admin status transitions, rendered as guided next-step buttons.
+ * Unlike ORDER_STATUS_FLOW (a display ordering), this is the real graph.
+ * Terminal states (Fulfilled, Rejected) map to an empty array.
+ */
+export const ORDER_STATUS_TRANSITIONS: Record<
+  OrderStatus,
+  readonly { readonly to: OrderStatus; readonly label: string }[]
+> = {
+  893960000: [
+    { to: 893960001, label: 'Approve' },
+    { to: 893960004, label: 'Reject' },
+  ], // Submitted
+  893960001: [{ to: 893960002, label: 'Assign' }], // Approved
+  893960002: [{ to: 893960003, label: 'Mark fulfilled' }], // Assigned
+  893960003: [], // Fulfilled (terminal)
+  893960004: [], // Rejected (terminal)
+}
+
+/** Valid next-step transitions for a status (empty when terminal/unknown). */
+export function nextTransitions(
+  status: OrderStatus | undefined,
+): readonly { readonly to: OrderStatus; readonly label: string }[] {
+  return status == null ? [] : ORDER_STATUS_TRANSITIONS[status] ?? []
+}

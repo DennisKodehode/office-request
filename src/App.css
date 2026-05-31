@@ -24,6 +24,28 @@
   padding: 0.15rem 0.5rem;
 }
 
+.app-tabs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.app-tabs button {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 0.35rem 0.6rem;
+  font: inherit;
+  color: #5a5f66;
+  cursor: pointer;
+}
+
+.app-tabs button[aria-current='true'] {
+  color: #1a1a1a;
+  border-bottom-color: #2563eb;
+  font-weight: 600;
+}
+
 .app-header__user {
   margin-left: auto;
   font-size: 0.85rem;

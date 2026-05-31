@@ -89,6 +89,7 @@ type NewOrder = {
 type OrderCreateInput = Parameters<typeof Poc_ordersService.create>[0]
 type OrderUpdateInput = Parameters<typeof Poc_ordersService.update>[1]
 type OrderLineCreateInput = Parameters<typeof Poc_orderlinesService.create>[0]
+type OrderLineUpdateInput = Parameters<typeof Poc_orderlinesService.update>[1]
 
 export function createOrder(record: NewOrder): Promise<MutationResult<Poc_orders>> {
   return run(() => Poc_ordersService.create(record as unknown as OrderCreateInput))
@@ -108,6 +109,12 @@ export function deleteOrder(id: string): Promise<MutationResult<void>> {
   return runVoid(() => Poc_ordersService.delete(id))
 }
 
+/** Update an order's notes (owner editing a Submitted order). */
+export function updateOrderNotes(id: string, notes: string): Promise<MutationResult<Poc_orders>> {
+  const changes = { poc_notes: notes } as unknown as OrderUpdateInput
+  return run(() => Poc_ordersService.update(id, changes))
+}
+
 // --- Order lines (Phase 4) ---
 // @odata.bind paths use the entity SET name (from power.config.json:
 // poc_orders / poc_products — regular pluralization here, not irregular).
@@ -124,4 +131,18 @@ export function createOrderLine(
       poc_quantity: quantity,
     } as unknown as OrderLineCreateInput),
   )
+}
+
+/** Update an order line's quantity (owner editing a Submitted order). */
+export function updateOrderLine(
+  id: string,
+  quantity: number,
+): Promise<MutationResult<Poc_orderlines>> {
+  const changes = { poc_quantity: quantity } as unknown as OrderLineUpdateInput
+  return run(() => Poc_orderlinesService.update(id, changes))
+}
+
+/** Remove an order line (owner editing a Submitted order). */
+export function deleteOrderLine(id: string): Promise<MutationResult<void>> {
+  return runVoid(() => Poc_orderlinesService.delete(id))
 }
