@@ -2,11 +2,23 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Working agreement (workflow)
+
+We build through `implementation-plan.md` one phase at a time, using this loop per phase:
+1. **Plan** — enter plan mode; research the codebase + latest docs (prefer the `context7-mcp` skill / Context7 MCP for library docs, WebSearch as fallback); write a structured plan to the plan file.
+2. **Approve** — surface the plan via ExitPlanMode and wait for the user's go-ahead.
+3. **Implement** — code the approved plan; keep scope small per `project-scope.md`.
+4. **Check** — `npm run build` and `npm run lint` must both be clean (exit 0).
+5. **Verify** — confirm behavior via the Power Apps **Local Play URL** (not bare localhost).
+6. **Ship** — one clean per-phase commit, pushed to `main` (ask before pushing).
+
+`implementation-plan.md` is the source of truth for phase order; `project-scope.md` for scope/decisions.
+
 ## Project Overview
 
 `office-request` ("Office request") is a **Microsoft Power Apps Code App**: a React 19 + TypeScript single-page app, built with Vite, that runs inside the Power Platform and reads/writes **Dataverse** tables through the `@microsoft/power-apps` SDK. The domain is office-supply ordering. It was scaffolded from the standard "React + TypeScript + Vite" template and then wired for Power Apps Code Apps.
 
-Note: `src/App.tsx` is still the default Vite starter (a counter). The Dataverse data layer is fully generated and ready to use, but the actual office-request UI has not been built yet — that's the work this app exists for. The phased build order is in `implementation-plan.md` (starts at Phase 0: bootstrap the Power Apps context in `main.tsx`).
+Build status: Phases 0–2 done — the app bootstraps the Power session (`src/power/`) and has a reusable Dataverse data layer (`src/data/`); `src/App.tsx` is a temporary readout, not the real UI yet. Feature UI (catalog, ordering, order management) is Phases 3–5. The phased build order is in `implementation-plan.md`.
 
 ## Product scope & rules
 
@@ -73,6 +85,18 @@ Verified against the installed types (v1.1.x) — easy to get wrong, so confirm 
 - **Current user** comes from `getContext()` → `IContext.user` (`objectId`, `fullName`, `userPrincipalName`, `tenantId`). Use `user.objectId` (Entra object id, stable) as the identity key — it is **not** the Dataverse `systemuserid`, and the data client has **no** `getUserId()`. Because `poc_requestedby` is a free-text string, store `objectId` there on create and filter "my orders" by the same value. (Read it via `useCurrentUser()`, not `getContext()` directly.)
 - **Data + custom requests**: `getClient(dataSourcesInfo)` (from `@microsoft/power-apps/data`) returns a `DataClient` with `createRecordAsync` / `updateRecordAsync` / `deleteRecordAsync` / `retrieveRecordAsync` / `retrieveMultipleRecordsAsync` / `executeAsync` (plus file/image helpers). `IGetAllOptions`/query options support `filter` (OData string), `select`, `orderBy`, `top`, paging — but **no `expand`**.
 - **Admin / roles**: there is no roles API. The admin check is done in `resolveIsAdmin.ts` by querying the **`systemuser`** data source (generated service `SystemusersService`, data-source name `'systemusers'`; added via `pac code add-data-source -a dataverse -t systemuser`) with the role test inside the OData `filter` lambda: `azureactivedirectoryobjectid eq '<objectId>' and systemuserroles_association/any(x:x/name eq '<ADMIN_ROLE_NAME>')`. The admin role is named **`Order Admin`** (`ADMIN_ROLE_NAME` in `resolveIsAdmin.ts`) and must exist in Dataverse and be assigned. If that lambda errors in-env, fall back to multi-table: add `systemuserroles`/`role`.
+
+### Data layer (`src/data/`)
+
+Thin hooks/helpers over the generated services. **Components never import a `Poc_*Service` directly** — only `src/data/*` (and `src/power/resolveIsAdmin.ts`) touch generated services.
+
+- **Query hooks** return one shape: `{ data, loading, error, refetch }` (`QueryResult<T>` in `types.ts`). `data === undefined` = not loaded; `[]` = loaded-but-empty (branch on `loading` first). `useDataverseQuery(queryFn, deps)` (`useDataverseQuery.ts`) owns the loading/error/cancelled state machine (React `ignore`-flag cleanup, StrictMode-safe, stale-while-revalidate) + `refetch`. State is only set from async callbacks/`refetch`, never synchronously in the effect body (per `react-hooks/set-state-in-effect`). Each caller must list everything its `queryFn` closure captures in `deps`.
+  - `useProducts()` (admins see all; users `poc_available eq true`), `useMyOrders()` / `useAllOrders()` (`useOrders.ts`), `useOrder(id)` (`useOrder.ts` — order + lines via two queries, no `$expand`).
+- **Mutations** (`mutations.ts`) are plain async fns returning `MutationResult<T>` (`{ ok, data?, error? }`): `createProduct`/`updateProduct`/`setProductAvailability`, `createOrder`/`setOrderStatus`/`deleteOrder`, `createOrderLine`. Pattern: component calls a mutation, `await`s it, then calls the query's `refetch()`.
+- **`unwrap()`** (in `useDataverseQuery.ts`) is the single place the `IOperationResult` envelope is checked — throws on `!success`.
+- **OData filter rule (easy to get wrong):** string columns are **quoted** (`poc_requestedby eq '<id>'`, via `escapeODataString`); lookup/Guid columns are **unquoted** (`_poc_order_value eq <id>`). Reversing either is a silent 400.
+- **Option-sets** (`labels.ts`): `statusLabel`/`categoryLabel`/`parseStatus` + `ORDER_STATUS_FLOW`. The generated option-sets export a same-named const **and** type, which breaks `keyof typeof`/indexing under `verbatimModuleSyntax` — so code unions are declared explicitly and labels read through a `Record<number,string>` view with `Number(code)` indexing. For the same reason, order/order-line create/update inputs are cast (`as unknown as Parameters<typeof Service.x>[...]`) at the service boundary (the generated input also marks system fields like `ownerid`/`statecode` required, which Dataverse defaults — Phase 4 confirms at runtime).
+- **`format.ts`**: `formatMoney` (USD, MVP) / `formatDate`.
 
 ### Config
 
