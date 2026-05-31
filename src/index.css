@@ -20,3 +20,24 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
+
+/* App shell primitives — shared by <PowerProvider> (loading/error states,
+   rendered before App mounts) and <App>, so they live in the global stylesheet. */
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main {
+  flex: 1;
+  padding: 1.5rem;
+}
+
+.muted {
+  color: #5a5f66;
+}
+
+.error {
+  color: #b3261e;
+}

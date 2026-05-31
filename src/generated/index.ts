@@ -8,8 +8,10 @@ export * as CommonModels from './models/CommonModels';
 export * as Poc_orderlinesModel from './models/Poc_orderlinesModel';
 export * as Poc_ordersModel from './models/Poc_ordersModel';
 export * as Poc_productsModel from './models/Poc_productsModel';
+export * as SystemusersModel from './models/SystemusersModel';
 
 // Services
 export * from './services/Poc_orderlinesService';
 export * from './services/Poc_ordersService';
 export * from './services/Poc_productsService';
+export * from './services/SystemusersService';

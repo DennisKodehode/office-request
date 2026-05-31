@@ -1,13 +1,10 @@
-.app-shell {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
 .app-header {
   padding: 1rem 1.5rem;
   background: #ffffff;
   border-bottom: 1px solid #e2e4e8;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .app-header h1 {
@@ -15,15 +12,14 @@
   font-size: 1.4rem;
 }
 
-.app-main {
-  flex: 1;
-  padding: 1.5rem;
-}
-
-.muted {
-  color: #5a5f66;
-}
-
-.error {
-  color: #b3261e;
+.admin-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #0b5d1e;
+  background: #d8f5df;
+  border: 1px solid #9ad6a8;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
 }

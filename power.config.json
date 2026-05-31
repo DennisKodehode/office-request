@@ -27,6 +27,11 @@
           "entitySetName": "poc_orderlines",
           "logicalName": "poc_orderline",
           "isHidden": false
+        },
+        "users": {
+          "entitySetName": "systemusers",
+          "logicalName": "systemuser",
+          "isHidden": false
         }
       },
       "environmentVariableName": ""

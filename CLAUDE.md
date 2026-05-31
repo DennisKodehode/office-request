@@ -56,15 +56,23 @@ An ordering flow: **products** (catalog: name, category, unit price, availabilit
 
 ### App shell
 
-`index.html` → `src/main.tsx` (React root, `StrictMode`) → `src/App.tsx` (UI). Styling: `src/App.css`, `src/index.css`. Static assets in `src/assets/`; `public/` is served as-is.
+`index.html` → `src/main.tsx` (React root, `StrictMode`) → `<PowerProvider>` → `src/App.tsx` (UI). Styling: `src/App.css` (App-specific) and `src/index.css` (globals + the shared `app-shell`/`app-main`/`muted`/`error` primitives used by both the provider's loading/error states and App). Static assets in `src/assets/`; `public/` is served as-is.
+
+### Session / identity (`src/power/`)
+
+`PowerProvider` (`src/power/PowerProvider.tsx`) bootstraps the host connection **once** at the top of the tree: it awaits `getContext()` behind a timeout guard (`withTimeout.ts` — guards against opening bare localhost instead of the Local Play URL), resolves admin status, and only renders children when a session is ready (it renders the loading/error UI itself). Consume the session via hooks, never by calling `getContext()` again:
+- `useCurrentUser()` → `{ user, displayName }`; `user.objectId` is the identity key.
+- `useIsAdmin()` → `boolean`. This gate is **cosmetic** (Dataverse roles enforce server-side); all admin UI reads this hook so the resolution mechanism stays swappable.
+- `resolveIsAdmin.ts` owns the admin resolution + `ADMIN_ROLE_NAME`.
 
 ### Power Apps SDK runtime (`@microsoft/power-apps`)
 
 Verified against the installed types (v1.1.x) — easy to get wrong, so confirm here before guessing:
 
-- **App context** lives in `@microsoft/power-apps/app`: `setConfig(...)` (optional logger) and `getContext(): Promise<IContext>`. There is **no** `initialize` export and **no** `PowerProvider` component. `main.tsx` does not call this yet (Phase 0).
-- **Current user** comes from `getContext()` → `IContext.user` (`objectId`, `fullName`, `userPrincipalName`, `tenantId`). Use `user.objectId` (Entra object id, stable) as the identity key — it is **not** the Dataverse `systemuserid`, and the data client has **no** `getUserId()`. Because `poc_requestedby` is a free-text string, store `objectId` there on create and filter "my orders" by the same value.
-- **Data + custom requests**: `getClient(dataSourcesInfo)` (from `@microsoft/power-apps/data`) returns a `DataClient` with `createRecordAsync` / `updateRecordAsync` / `deleteRecordAsync` / `retrieveRecordAsync` / `retrieveMultipleRecordsAsync` / `executeAsync` (plus file/image helpers). There is **no** roles API, so the "Office Request Admin" check must go through `executeAsync` (a Dataverse query) or an added role data source — this is the main open unknown (see `implementation-plan.md`, Phase 1).
+- **App context** lives in `@microsoft/power-apps/app`: `setConfig(...)` (optional logger) and `getContext(): Promise<IContext>`. There is **no** `initialize` export and **no** built-in provider component — our `<PowerProvider>` (above) is app code that wraps the single `getContext()` call. Bootstrap happens via the `powerApps()` Vite plugin, not an init call.
+- **Current user** comes from `getContext()` → `IContext.user` (`objectId`, `fullName`, `userPrincipalName`, `tenantId`). Use `user.objectId` (Entra object id, stable) as the identity key — it is **not** the Dataverse `systemuserid`, and the data client has **no** `getUserId()`. Because `poc_requestedby` is a free-text string, store `objectId` there on create and filter "my orders" by the same value. (Read it via `useCurrentUser()`, not `getContext()` directly.)
+- **Data + custom requests**: `getClient(dataSourcesInfo)` (from `@microsoft/power-apps/data`) returns a `DataClient` with `createRecordAsync` / `updateRecordAsync` / `deleteRecordAsync` / `retrieveRecordAsync` / `retrieveMultipleRecordsAsync` / `executeAsync` (plus file/image helpers). `IGetAllOptions`/query options support `filter` (OData string), `select`, `orderBy`, `top`, paging — but **no `expand`**.
+- **Admin / roles**: there is no roles API. The admin check is done in `resolveIsAdmin.ts` by querying the **`systemuser`** data source (generated service `SystemusersService`, data-source name `'systemusers'`; added via `pac code add-data-source -a dataverse -t systemuser`) with the role test inside the OData `filter` lambda: `azureactivedirectoryobjectid eq '<objectId>' and systemuserroles_association/any(x:x/name eq '<ADMIN_ROLE_NAME>')`. The admin role is named **`Order Admin`** (`ADMIN_ROLE_NAME` in `resolveIsAdmin.ts`) and must exist in Dataverse and be assigned. If that lambda errors in-env, fall back to multi-table: add `systemuserroles`/`role`.
 
 ### Config
 

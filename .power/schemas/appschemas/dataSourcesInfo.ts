@@ -25,5 +25,12 @@ export const dataSourcesInfo = {
     "primaryKey": "poc_productid",
     "dataSourceType": "Dataverse",
     "apis": {}
+  },
+  "systemusers": {
+    "tableId": "",
+    "version": "",
+    "primaryKey": "systemuserid",
+    "dataSourceType": "Dataverse",
+    "apis": {}
   }
 };
