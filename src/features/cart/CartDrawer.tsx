@@ -9,6 +9,8 @@ import './cart.css'
 interface CartDrawerProps {
   open: boolean
   onClose: () => void
+  /** Jump to the My Orders view (offered after a successful submit). */
+  onViewOrders: () => void
 }
 
 type SubmitResult =
@@ -23,7 +25,7 @@ type SubmitResult =
  * (useActionState can't be reset directly). Cart items live in CartProvider, so
  * the remount doesn't lose them.
  */
-export function CartDrawer({ open, onClose }: CartDrawerProps) {
+export function CartDrawer({ open, onClose, onViewOrders }: CartDrawerProps) {
   const [sessionKey, setSessionKey] = useState(0)
 
   const handleClose = () => {
@@ -32,7 +34,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
   }
 
   if (!open) return null
-  return <CartDrawerPanel key={sessionKey} onClose={handleClose} />
+  return <CartDrawerPanel key={sessionKey} onClose={handleClose} onViewOrders={onViewOrders} />
 }
 
 /**
@@ -41,7 +43,13 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
  * item (non-atomic — see below). On success it shows a confirmation; closing
  * remounts a fresh panel for the next session.
  */
-function CartDrawerPanel({ onClose }: { onClose: () => void }) {
+function CartDrawerPanel({
+  onClose,
+  onViewOrders,
+}: {
+  onClose: () => void
+  onViewOrders: () => void
+}) {
   const { items, count, subtotal, setQuantity, remove, clear } = useCart()
   const { user } = useCurrentUser()
   const closeRef = useRef<HTMLButtonElement>(null)
@@ -126,9 +134,14 @@ function CartDrawerPanel({ onClose }: { onClose: () => void }) {
               ✓ Order submitted — <strong>{result.ref}</strong> ({result.itemCount} item
               {result.itemCount === 1 ? '' : 's'})
             </p>
-            <button type="button" onClick={onClose}>
-              Done
-            </button>
+            <div className="cart-success__actions">
+              <button type="button" onClick={onClose}>
+                Keep shopping
+              </button>
+              <button type="button" onClick={() => { onViewOrders(); onClose() }}>
+                View my orders
+              </button>
+            </div>
           </div>
         ) : items.length === 0 ? (
           <div className="cart-drawer__body">

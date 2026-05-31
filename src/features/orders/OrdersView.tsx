@@ -3,6 +3,7 @@ import { useMyOrders, useAllOrders } from '../../data/useOrders'
 import { useIsAdmin } from '../../power/useIsAdmin'
 import type { QueryResult } from '../../data/types'
 import type { Poc_orders } from '../../generated/models/Poc_ordersModel'
+import { AsyncSection } from '../../components/AsyncSection'
 import { OrderRow } from './OrderRow'
 import './orders.css'
 
@@ -27,7 +28,7 @@ interface OrdersListProps {
 
 function OrdersList({ title, query, empty }: OrdersListProps) {
   const isAdmin = useIsAdmin()
-  const { data: orders, loading, error, refetch } = query
+  const { refetch } = query
   const [openId, setOpenId] = useState<string | undefined>(undefined)
   const toggle = (id: string) => setOpenId((cur) => (cur === id ? undefined : id))
 
@@ -35,28 +36,26 @@ function OrdersList({ title, query, empty }: OrdersListProps) {
     <section className="orders">
       <h2>{title}</h2>
 
-      {loading && orders === undefined && <p className="muted">Loading orders…</p>}
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      {orders && orders.length === 0 && <p className="muted">{empty}</p>}
-
-      {orders && orders.length > 0 && (
-        <ul className="orders__list">
-          {orders.map((order) => (
-            <OrderRow
-              key={order.poc_orderid}
-              order={order}
-              isAdmin={isAdmin}
-              open={openId === order.poc_orderid}
-              onToggle={toggle}
-              onListRefetch={refetch}
-            />
-          ))}
-        </ul>
-      )}
+      <AsyncSection
+        query={query}
+        loadingText="Loading orders…"
+        empty={<p className="muted">{empty}</p>}
+      >
+        {(orders) => (
+          <ul className="orders__list">
+            {orders.map((order) => (
+              <OrderRow
+                key={order.poc_orderid}
+                order={order}
+                isAdmin={isAdmin}
+                open={openId === order.poc_orderid}
+                onToggle={toggle}
+                onListRefetch={refetch}
+              />
+            ))}
+          </ul>
+        )}
+      </AsyncSection>
     </section>
   )
 }

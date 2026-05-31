@@ -154,3 +154,8 @@
 .cart-success {
   color: #0b5d1e;
 }
+
+.cart-success__actions {
+  display: flex;
+  gap: 0.5rem;
+}
