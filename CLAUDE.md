@@ -18,7 +18,7 @@ We build through `implementation-plan.md` one phase at a time, using this loop p
 
 `office-request` ("Office request") is a **Microsoft Power Apps Code App**: a React 19 + TypeScript single-page app, built with Vite, that runs inside the Power Platform and reads/writes **Dataverse** tables through the `@microsoft/power-apps` SDK. The domain is office-supply ordering. It was scaffolded from the standard "React + TypeScript + Vite" template and then wired for Power Apps Code Apps.
 
-Build status: Phases 0–2 done — the app bootstraps the Power session (`src/power/`) and has a reusable Dataverse data layer (`src/data/`); `src/App.tsx` is a temporary readout, not the real UI yet. Feature UI (catalog, ordering, order management) is Phases 3–5. The phased build order is in `implementation-plan.md`.
+Build status: Phases 0–3 done — the app bootstraps the Power session (`src/power/`), has a reusable Dataverse data layer (`src/data/`), and renders the product catalog (`src/features/catalog/`). Remaining feature UI: ordering (Phase 4), order management (Phase 5), nav/polish (Phase 6). The phased build order is in `implementation-plan.md`.
 
 ## Product scope & rules
 
@@ -95,8 +95,14 @@ Thin hooks/helpers over the generated services. **Components never import a `Poc
 - **Mutations** (`mutations.ts`) are plain async fns returning `MutationResult<T>` (`{ ok, data?, error? }`): `createProduct`/`updateProduct`/`setProductAvailability`, `createOrder`/`setOrderStatus`/`deleteOrder`, `createOrderLine`. Pattern: component calls a mutation, `await`s it, then calls the query's `refetch()`.
 - **`unwrap()`** (in `useDataverseQuery.ts`) is the single place the `IOperationResult` envelope is checked — throws on `!success`.
 - **OData filter rule (easy to get wrong):** string columns are **quoted** (`poc_requestedby eq '<id>'`, via `escapeODataString`); lookup/Guid columns are **unquoted** (`_poc_order_value eq <id>`). Reversing either is a silent 400.
-- **Option-sets** (`labels.ts`): `statusLabel`/`categoryLabel`/`parseStatus` + `ORDER_STATUS_FLOW`. The generated option-sets export a same-named const **and** type, which breaks `keyof typeof`/indexing under `verbatimModuleSyntax` — so code unions are declared explicitly and labels read through a `Record<number,string>` view with `Number(code)` indexing. For the same reason, order/order-line create/update inputs are cast (`as unknown as Parameters<typeof Service.x>[...]`) at the service boundary (the generated input also marks system fields like `ownerid`/`statecode` required, which Dataverse defaults — Phase 4 confirms at runtime).
+- **Option-sets** (`labels.ts`): `statusLabel`/`categoryLabel`/`parseStatus`/`parseCategory` + `ORDER_STATUS_FLOW` + `PRODUCT_CATEGORY_OPTIONS`. The generated option-sets export a same-named const **and** type, which breaks `keyof typeof`/indexing under `verbatimModuleSyntax` — so code unions are declared explicitly and labels read through a `Record<number,string>` view with `Number(code)` indexing. For the same reason, order/order-line **and product** create/update inputs are cast (`as unknown as Parameters<typeof Service.x>[...]`) at the service boundary; `mutations.ts` exposes friendly input types (e.g. `ProductInput`) so components don't touch the generated shapes. The generated input also marks system fields like `ownerid`/`statecode` required, which Dataverse defaults for a Code App (confirmed at runtime in Phase 3 — product create/update works with only the meaningful fields).
 - **`format.ts`**: `formatMoney` (USD, MVP) / `formatDate`.
+
+### Features (`src/features/`)
+
+Feature UI lives here, one folder per feature. A feature consumes the `src/data/` hooks + mutations only — **never** a `Poc_*Service` directly (enforced boundary). Pattern: render `{loading, error, empty, data}` states from a query hook (branch on `loading` first); on a mutation, `await` it then call the query's `refetch()`; gate admin controls behind `useIsAdmin()` (cosmetic only). Forms use React 19 form actions + `useActionState` (built-in pending/error).
+
+- **`catalog/`** (Phase 3): `Catalog.tsx` (page: grid + admin "Add product"), `ProductCard.tsx` (read-only card; admin Edit / availability-toggle footer; dimmed when unavailable), `ProductFormDialog.tsx` (native `<dialog>` add/edit via form action), `catalog.css`. Soft-delete only (`setProductAvailability`). `poc_image` is a plain URL string (with an empty/broken-image fallback), not a Dataverse image column.
 
 ### Config
 

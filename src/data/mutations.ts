@@ -5,7 +5,7 @@ import type { Poc_orderlines } from '../generated/models/Poc_orderlinesModel'
 import type { Poc_products } from '../generated/models/Poc_productsModel'
 import { unwrap } from './useDataverseQuery'
 import type { MutationResult } from './types'
-import type { OrderStatus } from './labels'
+import type { OrderStatus, ProductCategory } from './labels'
 
 // Mutations are plain async functions (not hooks): components call them on a
 // user action, await the result, then refetch the relevant query. Both helpers
@@ -32,20 +32,36 @@ async function runVoid(op: () => Promise<void>): Promise<MutationResult<void>> {
 // Param types are derived straight from the generated service signatures, so
 // they stay structurally identical to what the SDK expects (including under
 // exactOptionalPropertyTypes) without redefining the field lists by hand.
-type NewProduct = Parameters<typeof Poc_productsService.create>[0]
-type ProductChanges = Parameters<typeof Poc_productsService.update>[1]
+// Friendly write-shape for products. We cast to the generated input at the
+// service boundary because the option-set const+type name collision (see
+// labels.ts) makes our ProductCategory not structurally match the generated
+// poc_category type, and the generated input also marks system fields
+// (ownerid/statecode) required, which Dataverse defaults for a Code App.
+export interface ProductInput {
+  poc_product1: string
+  poc_category?: ProductCategory
+  poc_available?: boolean
+  poc_unitprice?: number
+  poc_image?: string
+  poc_description?: string
+}
+
+type ProductCreateInput = Parameters<typeof Poc_productsService.create>[0]
+type ProductUpdateInput = Parameters<typeof Poc_productsService.update>[1]
 
 // --- Products (Phase 3) ---
 
-export function createProduct(record: NewProduct): Promise<MutationResult<Poc_products>> {
-  return run(() => Poc_productsService.create(record))
+export function createProduct(record: ProductInput): Promise<MutationResult<Poc_products>> {
+  return run(() => Poc_productsService.create(record as unknown as ProductCreateInput))
 }
 
 export function updateProduct(
   id: string,
-  changes: ProductChanges,
+  changes: Partial<ProductInput>,
 ): Promise<MutationResult<Poc_products>> {
-  return run(() => Poc_productsService.update(id, changes))
+  return run(() =>
+    Poc_productsService.update(id, changes as unknown as ProductUpdateInput),
+  )
 }
 
 /** Soft-delete: hide a product from the catalog without removing history. */

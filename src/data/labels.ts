@@ -34,6 +34,17 @@ export function parseStatus(raw: string): OrderStatus {
   return Number(raw) as OrderStatus
 }
 
+/** Convert a string form value (e.g. a <select>) back to a typed category key. */
+export function parseCategory(raw: string): ProductCategory {
+  return Number(raw) as ProductCategory
+}
+
+/** All product categories as [code, label] pairs, for building a <select>. */
+export const PRODUCT_CATEGORY_OPTIONS: readonly (readonly [ProductCategory, string])[] =
+  Object.entries(categoryLabels).map(
+    ([code, label]) => [Number(code) as ProductCategory, label] as const,
+  )
+
 /**
  * The admin status lifecycle in order:
  * Submitted → Approved → Rejected → Assigned → Fulfilled.
