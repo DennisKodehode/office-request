@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "appId": "73ada2fb-1e9d-42c9-9af6-f7fea22e75da",
+  "appDisplayName": "Office request",
+  "region": "prod",
+  "environmentId": "2d193e45-933e-eda0-a6eb-d2498b9d7201",
+  "description": " ",
+  "buildPath": "./dist",
+  "buildEntryPoint": "index.html",
+  "localAppUrl": "http://localhost:3000",
+  "logoPath": "Default",
+  "connectionReferences": {},
+  "databaseReferences": {
+    "default.cds": {
+      "dataSources": {
+        "products": {
+          "entitySetName": "poc_products",
+          "logicalName": "poc_product",
+          "isHidden": false
+        },
+        "orders": {
+          "entitySetName": "poc_orders",
+          "logicalName": "poc_order",
+          "isHidden": false
+        },
+        "orderlines": {
+          "entitySetName": "poc_orderlines",
+          "logicalName": "poc_orderline",
+          "isHidden": false
+        }
+      },
+      "environmentVariableName": ""
+    }
+  }
+}
