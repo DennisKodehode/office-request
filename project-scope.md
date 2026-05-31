@@ -13,7 +13,7 @@ Two roles:
 
 Important: real permission enforcement lives in **Dataverse security roles**, not in the React UI. The app should hide/disable actions a user isn't allowed to do, but the source of truth is the table permissions. "Their own orders" is identified by matching the current user against `poc_requestedby` — the catalog stays read-only for users.
 
-Admin is determined by a **Dataverse security role** (e.g. an "Office Request Admin" role): the app checks it to toggle admin UI, and the same role grants the broader table permissions.
+Admin is determined by a **Dataverse security role** (named **"Order Admin"**): the app checks it to toggle admin UI, and the same role grants the broader table permissions.
 
 ## Core flows (MVP)
 
@@ -43,9 +43,13 @@ Admin is determined by a **Dataverse security role** (e.g. an "Office Request Ad
 - No editing orders after an admin has acted on them.
 - No bulk import/export.
 
+## Deferred (to revisit)
+
+- **Product images.** The product table currently has only `poc_image` (a plain text/URL field, max 100 chars), not a true Dataverse Image column — so the catalog renders an image only if a URL is provided. Real file-upload images would require adding an **Image** column to the Product table in Dataverse, re-pulling the data source (`pac code add-data-source -t poc_product`), then building upload/preview UI (the pattern that already exists for `systemuser.entityimage`). Deferred until after the core ordering flow.
+
 ## Decisions (locked)
 
-1. **Admin check** — a **Dataverse security role** ("Office Request Admin"). The app reads the current user's roles to toggle admin UI; the role also carries the wider table permissions.
+1. **Admin check** — a **Dataverse security role** (named **"Order Admin"**). The app reads the current user's roles to toggle admin UI; the role also carries the wider table permissions.
 2. **Edit window** — users can edit/cancel an order **only while status = *Submitted***. Once an admin acts on it, it locks for the user (admin can still edit anything).
 3. **Own orders** — identified by **`poc_requestedby` = current user**. On create, the app sets `poc_requestedby` to the logged-in user. (Note: this enables "order on behalf of" later, but for now requested-by is always the current user. Since row ownership is *not* the filter, make sure Dataverse permissions still restrict users to their own rows — or filter by `poc_requestedby` in queries and rely on role-level read scope.)
 4. **Deleting a product** — no hard delete; set **`poc_available = false`** so it leaves the catalog but order history stays intact. (A true delete is reserved for products never used on an order.)
