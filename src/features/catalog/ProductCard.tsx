@@ -3,6 +3,8 @@ import type { Poc_products } from '../../generated/models/Poc_productsModel'
 import { categoryLabel } from '../../data/labels'
 import type { ProductCategory } from '../../data/labels'
 import { formatMoney } from '../../data/format'
+import { Badge } from '../../components/Badge'
+import { Button } from '../../components/Button'
 import { useCart } from '../cart/useCart'
 
 interface ProductCardProps {
@@ -30,14 +32,11 @@ export function ProductCard({
   const [qty, setQty] = useState(1)
   const available = product.poc_available ?? false
   const showImage = !!product.poc_image && !imageFailed
+  const name = product.poc_product1 ?? 'Untitled product'
 
   function handleAdd() {
     add(
-      {
-        productId: product.poc_productid,
-        name: product.poc_product1 ?? 'Untitled product',
-        unitPrice: product.poc_unitprice ?? 0,
-      },
+      { productId: product.poc_productid, name, unitPrice: product.poc_unitprice ?? 0 },
       qty,
     )
     setQty(1)
@@ -47,31 +46,35 @@ export function ProductCard({
     <article className={`product-card${available ? '' : ' product-card--unavailable'}`}>
       <div className="product-card__image">
         {showImage ? (
-          <img
-            src={product.poc_image}
-            alt={product.poc_product1 ?? 'Product'}
-            onError={() => setImageFailed(true)}
-          />
+          <img src={product.poc_image} alt={name} onError={() => setImageFailed(true)} />
         ) : (
           <span className="product-card__image-fallback" aria-hidden="true">
             No image
           </span>
         )}
-        {isAdmin && !available && <span className="product-card__tag">Unavailable</span>}
+        {isAdmin && !available && (
+          <span className="product-card__tag">
+            <Badge tone="rejected">Unavailable</Badge>
+          </span>
+        )}
       </div>
 
       <div className="product-card__body">
-        <h3 className="product-card__name">{product.poc_product1 ?? 'Untitled product'}</h3>
-        <p className="muted product-card__meta">
-          {categoryLabel(product.poc_category as ProductCategory | undefined)}
-          {product.poc_unitprice != null && ` · ${formatMoney(product.poc_unitprice)}`}
-        </p>
+        {product.poc_category != null && (
+          <span className="product-card__category">
+            {categoryLabel(product.poc_category as ProductCategory)}
+          </span>
+        )}
+        <h3 className="product-card__name">{name}</h3>
         {product.poc_description && (
           <p className="product-card__description">{product.poc_description}</p>
         )}
+        <div className="product-card__price">
+          {product.poc_unitprice != null ? formatMoney(product.poc_unitprice) : '—'}
+        </div>
 
         <div className="product-card__buy">
-          <div className="product-card__qty">
+          <div className="qty-stepper">
             <button
               type="button"
               onClick={() => setQty((q) => Math.max(1, q - 1))}
@@ -90,24 +93,25 @@ export function ProductCard({
               +
             </button>
           </div>
-          <button type="button" onClick={handleAdd} disabled={!available}>
+          <Button variant="primary" size="sm" onClick={handleAdd} disabled={!available}>
             Add
-          </button>
+          </Button>
         </div>
       </div>
 
       {isAdmin && (
         <div className="product-card__actions">
-          <button type="button" onClick={() => onEdit(product)} disabled={busy}>
+          <Button variant="ghost" size="sm" onClick={() => onEdit(product)} disabled={busy}>
             Edit
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => onToggleAvailability(product)}
-            disabled={busy}
+            loading={busy}
           >
-            {available ? 'Make unavailable' : 'Make available'}
-          </button>
+            {available ? 'Hide' : 'Show'}
+          </Button>
         </div>
       )}
     </article>

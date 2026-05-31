@@ -1,9 +1,9 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: var(--font-body);
   line-height: 1.5;
   font-weight: 400;
-  color: #1a1a1a;
-  background-color: #f5f6f8;
+  color: var(--text);
+  background-color: var(--bg);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -21,8 +21,15 @@ body {
   min-height: 100vh;
 }
 
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
 /* App shell primitives — shared by <PowerProvider> (loading/error states,
-   rendered before App mounts) and <App>, so they live in the global stylesheet. */
+   rendered before App mounts) and <App>. */
 .app-shell {
   min-height: 100vh;
   display: flex;
@@ -31,13 +38,42 @@ body {
 
 .app-main {
   flex: 1;
-  padding: 1.5rem;
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-5);
 }
 
 .muted {
-  color: #5a5f66;
+  color: var(--text-muted);
 }
 
 .error {
-  color: #b3261e;
+  color: var(--danger);
+}
+
+/* Generic focus-visible baseline for interactive elements */
+:where(button, a, input, select, textarea):focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+/* Centered states the provider renders before the shell is styled */
+.app-boot {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-6);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

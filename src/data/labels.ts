@@ -85,3 +85,32 @@ export function nextTransitions(
 ): readonly { readonly to: OrderStatus; readonly label: string }[] {
   return status == null ? [] : ORDER_STATUS_TRANSITIONS[status] ?? []
 }
+
+/** The happy-path progression shown in the order status stepper (Rejected is
+ *  off-path / terminal and handled separately). */
+export const ORDER_STATUS_STEPS: readonly OrderStatus[] = [
+  893960000, // Submitted
+  893960001, // Approved
+  893960002, // Assigned
+  893960003, // Fulfilled
+]
+
+export const STATUS_REJECTED: OrderStatus = 893960004
+
+type StatusTone = 'submitted' | 'approved' | 'assigned' | 'fulfilled' | 'rejected'
+
+/** Maps a status code to its Badge tone. */
+export function statusTone(status: OrderStatus | undefined): StatusTone {
+  switch (status) {
+    case 893960001:
+      return 'approved'
+    case 893960002:
+      return 'assigned'
+    case 893960003:
+      return 'fulfilled'
+    case 893960004:
+      return 'rejected'
+    default:
+      return 'submitted'
+  }
+}

@@ -1,0 +1,154 @@
+/*
+ * Design tokens — the single source of truth for the app's visual language.
+ * Crisp SaaS, light: white surfaces on a soft-gray canvas, one indigo accent.
+ * Every feature stylesheet reads from these vars; change a value here, not in
+ * the feature CSS. Structured so a dark theme could be added under a selector
+ * later without touching components.
+ */
+:root {
+  /* Fonts (loaded in index.html) */
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Hanken Grotesk', system-ui, sans-serif;
+
+  /* Neutral surfaces & text */
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f1f3f6;
+  --border: #e6e8ec;
+  --border-strong: #d3d7de;
+  --text: #1a1d23;
+  --text-muted: #646b76;
+  --text-faint: #9aa1ac;
+
+  /* Accent (indigo) */
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-weak: #eef0fe;
+  --accent-contrast: #ffffff;
+
+  /* Sidebar */
+  --sidebar-bg: #14161c;
+  --sidebar-surface: #1c1f27;
+  --sidebar-border: #272b35;
+  --sidebar-text: #c9cdd6;
+  --sidebar-text-muted: #8b909c;
+  --sidebar-item-active-bg: rgba(99, 102, 241, 0.18);
+  --sidebar-item-active-text: #c7c9ff;
+
+  /* Scrim behind modals/drawers */
+  --overlay: rgba(20, 23, 28, 0.45);
+
+  /* Feedback */
+  --danger: #c2342b;
+  --danger-hover: #a92a22;
+  --danger-weak: #fdeceb;
+  --success: #0b7a3b;
+
+  /* Order status pairs (fg / bg) */
+  --status-submitted-fg: #1d4ed8;
+  --status-submitted-bg: #e4ecfe;
+  --status-approved-fg: #0b7a3b;
+  --status-approved-bg: #ddf3e6;
+  --status-assigned-fg: #8a5a00;
+  --status-assigned-bg: #fbeecd;
+  --status-fulfilled-fg: #4a515b;
+  --status-fulfilled-bg: #e9ebef;
+  --status-rejected-fg: #b3382c;
+  --status-rejected-bg: #fce4e1;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  /* Shadows — soft, low-opacity */
+  --shadow-sm: 0 1px 2px rgba(20, 23, 28, 0.06), 0 1px 3px rgba(20, 23, 28, 0.04);
+  --shadow-md: 0 4px 12px rgba(20, 23, 28, 0.08), 0 2px 4px rgba(20, 23, 28, 0.04);
+  --shadow-lg: 0 12px 32px rgba(20, 23, 28, 0.14), 0 4px 8px rgba(20, 23, 28, 0.06);
+
+  /* Type scale */
+  --text-xs: 0.75rem;
+  --text-sm: 0.85rem;
+  --text-base: 0.95rem;
+  --text-lg: 1.1rem;
+  --text-xl: 1.35rem;
+  --text-2xl: 1.7rem;
+
+  /* Motion */
+  --transition: 150ms ease;
+  --transition-slow: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Layout */
+  --content-max: 1100px;
+  --sidebar-w: 248px;
+  --focus-ring: 0 0 0 3px var(--accent-weak), 0 0 0 1px var(--accent);
+
+  color-scheme: light;
+}
+
+/*
+ * Dark theme — applied via <html data-theme="dark"> by ThemeProvider. Overrides
+ * the same variables; components read tokens, so they re-theme automatically.
+ * The sidebar stays dark in both themes (it's dark in light mode too), with
+ * only subtle shifts so it sits naturally against the dark canvas.
+ */
+[data-theme='dark'] {
+  --bg: #0f1115;
+  --surface: #171a21;
+  --surface-2: #1e222b;
+  --border: #2a2f3a;
+  --border-strong: #3a4150;
+  --text: #e7e9ee;
+  --text-muted: #9aa1ad;
+  --text-faint: #6b7280;
+
+  --accent: #7c83ff;
+  --accent-hover: #9197ff;
+  --accent-weak: rgba(124, 131, 255, 0.16);
+  --accent-contrast: #0f1115;
+
+  --sidebar-bg: #121419;
+  --sidebar-surface: #1a1d24;
+  --sidebar-border: #262b34;
+  --sidebar-text: #c9cdd6;
+  --sidebar-text-muted: #828896;
+  --sidebar-item-active-bg: rgba(124, 131, 255, 0.2);
+  --sidebar-item-active-text: #cdd0ff;
+
+  --overlay: rgba(0, 0, 0, 0.6);
+
+  --danger: #f1746a;
+  --danger-hover: #f58e85;
+  --danger-weak: rgba(241, 116, 106, 0.15);
+  --success: #4ec27d;
+
+  --status-submitted-fg: #9db8ff;
+  --status-submitted-bg: rgba(59, 99, 209, 0.22);
+  --status-approved-fg: #6ed79b;
+  --status-approved-bg: rgba(31, 138, 78, 0.22);
+  --status-assigned-fg: #f0c66a;
+  --status-assigned-bg: rgba(170, 120, 20, 0.22);
+  --status-fulfilled-fg: #aeb6c2;
+  --status-fulfilled-bg: rgba(120, 130, 145, 0.2);
+  --status-rejected-fg: #f59489;
+  --status-rejected-bg: rgba(180, 70, 60, 0.22);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.45), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55), 0 4px 8px rgba(0, 0, 0, 0.4);
+
+  --focus-ring: 0 0 0 3px var(--accent-weak), 0 0 0 1px var(--accent);
+
+  color-scheme: dark;
+}

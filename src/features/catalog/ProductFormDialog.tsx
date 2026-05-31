@@ -2,13 +2,14 @@ import { useActionState, useEffect, useRef } from 'react'
 import type { Poc_products } from '../../generated/models/Poc_productsModel'
 import { PRODUCT_CATEGORY_OPTIONS, parseCategory } from '../../data/labels'
 import { createProduct, updateProduct } from '../../data/mutations'
+import { Button } from '../../components/Button'
 
 interface ProductFormDialogProps {
   /** The product being edited, or null when adding a new one. */
   product: Poc_products | null
   onClose: () => void
-  /** Called after a successful create/update so the parent can refetch. */
-  onSaved: () => void
+  /** Called after a successful create/update so the parent can refetch + toast. */
+  onSaved: (mode: 'add' | 'edit') => void
 }
 
 type FormResult = { error: string } | null
@@ -22,8 +23,6 @@ export function ProductFormDialog({ product, onClose, onSaved }: ProductFormDial
   const dialogRef = useRef<HTMLDialogElement>(null)
   const isEdit = product !== null
 
-  // Drive the native modal imperatively, and keep parent state in sync when the
-  // user dismisses with Esc (the dialog's "cancel" event).
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
@@ -50,8 +49,6 @@ export function ProductFormDialog({ product, onClose, onSaved }: ProductFormDial
       const image = (formData.get('image') as string)?.trim()
       const description = (formData.get('description') as string)?.trim()
 
-      // exactOptionalPropertyTypes is on, so omit empty optionals rather than
-      // assigning them `undefined`.
       const fields = {
         poc_product1: name,
         poc_category: parseCategory(formData.get('category') as string),
@@ -66,25 +63,26 @@ export function ProductFormDialog({ product, onClose, onSaved }: ProductFormDial
         : await createProduct(fields)
 
       if (!res.ok) return { error: res.error ?? 'Save failed.' }
-      onSaved()
+      onSaved(isEdit ? 'edit' : 'add')
       return null
     },
     null,
   )
 
-  const defaultCategory = (product?.poc_category as number | undefined) ?? PRODUCT_CATEGORY_OPTIONS[0][0]
+  const defaultCategory =
+    (product?.poc_category as number | undefined) ?? PRODUCT_CATEGORY_OPTIONS[0][0]
 
   return (
     <dialog ref={dialogRef} className="product-dialog">
       <form action={submitAction} className="product-form">
         <h2>{isEdit ? 'Edit product' : 'Add product'}</h2>
 
-        <label>
+        <label className="field">
           Name
           <input name="name" type="text" defaultValue={product?.poc_product1 ?? ''} required />
         </label>
 
-        <label>
+        <label className="field">
           Category
           <select name="category" defaultValue={defaultCategory}>
             {PRODUCT_CATEGORY_OPTIONS.map(([code, label]) => (
@@ -95,7 +93,7 @@ export function ProductFormDialog({ product, onClose, onSaved }: ProductFormDial
           </select>
         </label>
 
-        <label>
+        <label className="field">
           Unit price (USD)
           <input
             name="price"
@@ -106,17 +104,17 @@ export function ProductFormDialog({ product, onClose, onSaved }: ProductFormDial
           />
         </label>
 
-        <label>
+        <label className="field">
           Image URL
           <input name="image" type="url" defaultValue={product?.poc_image ?? ''} />
         </label>
 
-        <label>
+        <label className="field">
           Description
           <textarea name="description" rows={3} defaultValue={product?.poc_description ?? ''} />
         </label>
 
-        <label className="product-form__checkbox">
+        <label className="field field--row">
           <input
             name="available"
             type="checkbox"
@@ -132,12 +130,12 @@ export function ProductFormDialog({ product, onClose, onSaved }: ProductFormDial
         )}
 
         <div className="product-form__actions">
-          <button type="button" onClick={onClose} disabled={isPending}>
+          <Button variant="ghost" onClick={onClose} disabled={isPending}>
             Cancel
-          </button>
-          <button type="submit" disabled={isPending}>
-            {isPending ? 'Saving…' : 'Save'}
-          </button>
+          </Button>
+          <Button variant="primary" type="submit" loading={isPending}>
+            Save
+          </Button>
         </div>
       </form>
     </dialog>

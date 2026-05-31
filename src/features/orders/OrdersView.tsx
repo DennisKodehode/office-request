@@ -13,20 +13,35 @@ import './orders.css'
  * (hooks can't be conditional) — the shared list rendering lives in OrdersList.
  */
 export function MyOrdersView() {
-  return <OrdersList title="My orders" query={useMyOrders()} empty="You have no orders yet." />
+  return (
+    <OrdersList
+      title="My orders"
+      subtitle="Track and manage the orders you’ve placed."
+      query={useMyOrders()}
+      empty="You have no orders yet."
+    />
+  )
 }
 
 export function AllOrdersView() {
-  return <OrdersList title="All orders" query={useAllOrders()} empty="No orders yet." />
+  return (
+    <OrdersList
+      title="All orders"
+      subtitle="Review every order and move it through its workflow."
+      query={useAllOrders()}
+      empty="No orders yet."
+    />
+  )
 }
 
 interface OrdersListProps {
   title: string
+  subtitle: string
   query: QueryResult<Poc_orders[]>
   empty: string
 }
 
-function OrdersList({ title, query, empty }: OrdersListProps) {
+function OrdersList({ title, subtitle, query, empty }: OrdersListProps) {
   const isAdmin = useIsAdmin()
   const { refetch } = query
   const [openId, setOpenId] = useState<string | undefined>(undefined)
@@ -35,6 +50,7 @@ function OrdersList({ title, query, empty }: OrdersListProps) {
   return (
     <section className="orders">
       <h2>{title}</h2>
+      <p className="muted orders__subtitle">{subtitle}</p>
 
       <AsyncSection
         query={query}

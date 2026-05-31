@@ -8,6 +8,9 @@ import {
   updateOrderLine,
   updateOrderNotes,
 } from '../../data/mutations'
+import { Button } from '../../components/Button'
+import { ConfirmDialog } from '../../components/ConfirmDialog'
+import { useToast } from '../../components/toast/useToast'
 
 interface OrderLineEditorProps {
   orderId: string
@@ -22,9 +25,9 @@ interface OrderLineEditorProps {
 /**
  * Owner edit controls for a Submitted order. Quantity ± and Remove apply
  * immediately (each a single mutation + refresh — the loaded order stays the
- * source of truth, no local diff to reconcile). Notes have an explicit Save.
- * The last remaining line can't be removed — cancelling the order is the path
- * to an empty order.
+ * source of truth). Notes have an explicit Save. The last remaining line can't
+ * be removed — cancelling the order (confirm-gated) is the path to an empty
+ * order.
  */
 export function OrderLineEditor({
   orderId,
@@ -33,17 +36,39 @@ export function OrderLineEditor({
   onChanged,
   onCancelled,
 }: OrderLineEditorProps) {
+  const { notify } = useToast()
   const [draftNotes, setDraftNotes] = useState(notes ?? '')
   const [pending, setPending] = useState(false)
-  const [error, setError] = useState<string | undefined>(undefined)
+  const [confirming, setConfirming] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
 
-  async function apply(result: Promise<MutationResult<unknown>>, after: () => void) {
-    setError(undefined)
+  async function apply(
+    result: Promise<MutationResult<unknown>>,
+    after: () => void,
+    successMsg?: string,
+  ) {
     setPending(true)
     const res = await result
     setPending(false)
-    if (res.ok) after()
-    else setError(res.error ?? 'Something went wrong.')
+    if (res.ok) {
+      after()
+      if (successMsg) notify(successMsg, 'success')
+    } else {
+      notify(res.error ?? 'Something went wrong.', 'error')
+    }
+  }
+
+  async function confirmCancel() {
+    setCancelling(true)
+    const res = await deleteOrder(orderId)
+    setCancelling(false)
+    setConfirming(false)
+    if (res.ok) {
+      onCancelled()
+      notify('Order cancelled.', 'success')
+    } else {
+      notify(res.error ?? 'Could not cancel the order.', 'error')
+    }
   }
 
   return (
@@ -54,7 +79,7 @@ export function OrderLineEditor({
           return (
             <li key={line.poc_orderlineid} className="order-line">
               <span className="order-line__name">{lineProductName(line)}</span>
-              <div className="order-line__qty">
+              <div className="qty-stepper">
                 <button
                   type="button"
                   onClick={() => apply(updateOrderLine(line.poc_orderlineid, qty - 1), onChanged)}
@@ -91,7 +116,7 @@ export function OrderLineEditor({
         })}
       </ul>
 
-      <label className="order-notes">
+      <label className="field order-notes">
         Notes
         <textarea
           rows={2}
@@ -101,29 +126,37 @@ export function OrderLineEditor({
         />
       </label>
 
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-
       <div className="order-editor__actions">
-        <button
-          type="button"
-          onClick={() => apply(updateOrderNotes(orderId, draftNotes.trim()), onChanged)}
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => apply(updateOrderNotes(orderId, draftNotes.trim()), onChanged, 'Notes saved.')}
           disabled={pending}
         >
           Save notes
-        </button>
-        <button
-          type="button"
-          className="order-cancel"
-          onClick={() => apply(deleteOrder(orderId), onCancelled)}
+        </Button>
+        <Button
+          variant="danger"
+          size="sm"
+          onClick={() => setConfirming(true)}
           disabled={pending}
         >
           Cancel order
-        </button>
+        </Button>
       </div>
+
+      {confirming && (
+        <ConfirmDialog
+          title="Cancel this order?"
+          message="This removes the order and its items. This can’t be undone."
+          confirmLabel="Cancel order"
+          cancelLabel="Keep order"
+          destructive
+          busy={cancelling}
+          onConfirm={confirmCancel}
+          onCancel={() => setConfirming(false)}
+        />
+      )}
     </div>
   )
 }

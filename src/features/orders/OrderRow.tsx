@@ -1,7 +1,8 @@
 import type { Poc_orders } from '../../generated/models/Poc_ordersModel'
-import { statusLabel } from '../../data/labels'
+import { statusLabel, statusTone } from '../../data/labels'
 import type { OrderStatus } from '../../data/labels'
 import { formatDate } from '../../data/format'
+import { Badge } from '../../components/Badge'
 import { OrderDetail } from './OrderDetail'
 
 interface OrderRowProps {
@@ -22,7 +23,7 @@ export function OrderRow({ order, isAdmin, open, onToggle, onListRefetch }: Orde
   const ref = `#${id.slice(0, 8).toUpperCase()}`
 
   return (
-    <li className="order-row">
+    <li className={`order-row${open ? ' order-row--open' : ''}`}>
       <button
         type="button"
         className="order-row__summary"
@@ -30,15 +31,13 @@ export function OrderRow({ order, isAdmin, open, onToggle, onListRefetch }: Orde
         aria-expanded={open}
       >
         <span className="order-row__ref">{ref}</span>
-        <span className={`order-badge order-badge--${status ?? 'unknown'}`}>
-          {statusLabel(status)}
-        </span>
+        <Badge tone={statusTone(status)}>{statusLabel(status)}</Badge>
         <span className="muted order-row__date">
           {formatDate(order.poc_requesteddate ?? order.createdon)}
         </span>
         {isAdmin && <span className="muted order-row__by">{order.poc_requestedby}</span>}
-        <span className="order-row__chevron" aria-hidden="true">
-          {open ? '▾' : '▸'}
+        <span className={`order-row__chevron${open ? ' order-row__chevron--open' : ''}`} aria-hidden="true">
+          ▸
         </span>
       </button>
 

@@ -3,6 +3,8 @@ import { useCurrentUser } from '../../power/useCurrentUser'
 import { createOrder, createOrderLine, deleteOrder } from '../../data/mutations'
 import { formatMoney } from '../../data/format'
 import { STATUS_SUBMITTED } from '../../data/labels'
+import { Button } from '../../components/Button'
+import { useToast } from '../../components/toast/useToast'
 import { useCart } from './useCart'
 import './cart.css'
 
@@ -37,12 +39,6 @@ export function CartDrawer({ open, onClose, onViewOrders }: CartDrawerProps) {
   return <CartDrawerPanel key={sessionKey} onClose={handleClose} onViewOrders={onViewOrders} />
 }
 
-/**
- * One cart session: lists lines with quantity steppers + remove, an order notes
- * field, the total, and a submit that creates the order header + one line per
- * item (non-atomic — see below). On success it shows a confirmation; closing
- * remounts a fresh panel for the next session.
- */
 function CartDrawerPanel({
   onClose,
   onViewOrders,
@@ -52,6 +48,7 @@ function CartDrawerPanel({
 }) {
   const { items, count, subtotal, setQuantity, remove, clear } = useCart()
   const { user } = useCurrentUser()
+  const { notify } = useToast()
   const closeRef = useRef<HTMLButtonElement>(null)
 
   // Esc to close + focus the close button on open (plain-div dialog a11y).
@@ -83,7 +80,9 @@ function CartDrawerPanel({
         ...(notes && { poc_notes: notes }),
       })
       if (!header.ok || !header.data?.poc_orderid) {
-        return { kind: 'error', message: header.error ?? 'Could not create order.' }
+        const message = header.error ?? 'Could not create order.'
+        notify(message, 'error')
+        return { kind: 'error', message }
       }
       const orderId = header.data.poc_orderid
 
@@ -93,20 +92,18 @@ function CartDrawerPanel({
         const line = await createOrderLine(orderId, item.productId, item.quantity)
         if (!line.ok) {
           await deleteOrder(orderId)
-          return {
-            kind: 'error',
-            message: 'Could not add items to your order. Nothing was submitted; please try again.',
-          }
+          const message =
+            'Could not add items to your order. Nothing was submitted; please try again.'
+          notify(message, 'error')
+          return { kind: 'error', message }
         }
       }
 
       // 3) Success — capture details before clearing the cart.
-      const confirmation: SubmitResult = {
-        kind: 'success',
-        ref: `#${orderId.slice(0, 8).toUpperCase()}`,
-        itemCount: count,
-      }
+      const ref = `#${orderId.slice(0, 8).toUpperCase()}`
+      const confirmation: SubmitResult = { kind: 'success', ref, itemCount: count }
       clear()
+      notify(`Order ${ref} submitted.`, 'success')
       return confirmation
     },
     null,
@@ -123,29 +120,46 @@ function CartDrawerPanel({
       >
         <header className="cart-drawer__header">
           <h2>Your cart</h2>
-          <button ref={closeRef} type="button" onClick={onClose} aria-label="Close cart">
+          <button
+            ref={closeRef}
+            type="button"
+            className="cart-drawer__close"
+            onClick={onClose}
+            aria-label="Close cart"
+          >
             ✕
           </button>
         </header>
 
         {result?.kind === 'success' ? (
-          <div className="cart-drawer__body">
-            <p className="cart-success" role="status">
-              ✓ Order submitted — <strong>{result.ref}</strong> ({result.itemCount} item
-              {result.itemCount === 1 ? '' : 's'})
+          <div className="cart-drawer__body cart-success">
+            <div className="cart-success__check" aria-hidden="true">
+              ✓
+            </div>
+            <p className="cart-success__title">Order submitted</p>
+            <p className="muted">
+              <strong>{result.ref}</strong> · {result.itemCount} item
+              {result.itemCount === 1 ? '' : 's'}
             </p>
             <div className="cart-success__actions">
-              <button type="button" onClick={onClose}>
+              <Button variant="secondary" onClick={onClose}>
                 Keep shopping
-              </button>
-              <button type="button" onClick={() => { onViewOrders(); onClose() }}>
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  onViewOrders()
+                  onClose()
+                }}
+              >
                 View my orders
-              </button>
+              </Button>
             </div>
           </div>
         ) : items.length === 0 ? (
-          <div className="cart-drawer__body">
+          <div className="cart-drawer__body cart-drawer__empty">
             <p className="muted">Your cart is empty.</p>
+            <p className="cart-empty__hint muted">Add products from the catalog to get started.</p>
           </div>
         ) : (
           <form action={submitAction} className="cart-drawer__body">
@@ -154,9 +168,9 @@ function CartDrawerPanel({
                 <li key={item.productId} className="cart-line">
                   <div className="cart-line__info">
                     <span className="cart-line__name">{item.name}</span>
-                    <span className="muted">{formatMoney(item.unitPrice)}</span>
+                    <span className="muted cart-line__unit">{formatMoney(item.unitPrice)} each</span>
                   </div>
-                  <div className="cart-line__qty">
+                  <div className="qty-stepper">
                     <button
                       type="button"
                       onClick={() => setQuantity(item.productId, item.quantity - 1)}
@@ -191,7 +205,7 @@ function CartDrawerPanel({
               ))}
             </ul>
 
-            <label className="cart-notes">
+            <label className="field cart-notes">
               Order notes
               <textarea name="notes" rows={2} disabled={isPending} />
             </label>
@@ -207,9 +221,15 @@ function CartDrawerPanel({
               </p>
             )}
 
-            <button type="submit" className="cart-submit" disabled={isPending || count === 0}>
-              {isPending ? 'Submitting…' : 'Submit order'}
-            </button>
+            <Button
+              type="submit"
+              variant="primary"
+              block
+              loading={isPending}
+              disabled={count === 0}
+            >
+              Submit order
+            </Button>
           </form>
         )}
       </aside>

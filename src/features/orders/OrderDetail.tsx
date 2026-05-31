@@ -4,6 +4,7 @@ import { STATUS_SUBMITTED, statusLabel } from '../../data/labels'
 import type { OrderStatus } from '../../data/labels'
 import { OrderStatusControls } from './OrderStatusControls'
 import { OrderLineEditor } from './OrderLineEditor'
+import { OrderStatusStepper } from './OrderStatusStepper'
 import { lineProductName } from './orderLineName'
 
 interface OrderDetailProps {
@@ -17,20 +18,20 @@ interface OrderDetailProps {
 
 /**
  * Expanded order detail: lazily loads the order + its lines (only when a row is
- * open, so one line-query fires per opened order). Shows lines (name + qty — no
- * money, since lines carry no unit price). Admins get next-step status buttons;
- * the owner gets edit controls while the order is still Submitted.
+ * open, so one line-query fires per opened order). Shows a status stepper +
+ * lines (name + qty — no money, since lines carry no unit price). Admins get
+ * next-step status buttons; the owner gets edit controls while still Submitted.
  */
 export function OrderDetail({ orderId, isAdmin, onListRefetch, onCollapse }: OrderDetailProps) {
   const { data, loading, error, refetch } = useOrder(orderId)
   const { user } = useCurrentUser()
 
   if (loading && data === undefined) {
-    return <p className="muted">Loading order…</p>
+    return <p className="muted order-detail__loading">Loading order…</p>
   }
   if (error) {
     return (
-      <p className="error" role="alert">
+      <p className="error order-detail__loading" role="alert">
         Couldn’t load order items: {error}
       </p>
     )
@@ -55,11 +56,13 @@ export function OrderDetail({ orderId, isAdmin, onListRefetch, onCollapse }: Ord
 
   return (
     <div className="order-detail">
+      {status != null && <OrderStatusStepper status={status} />}
+
       {!canEdit && (
         <ul className="order-lines">
           {lines.length === 0 && <li className="muted">This order has no items.</li>}
           {lines.map((line) => (
-            <li key={line.poc_orderlineid} className="order-line">
+            <li key={line.poc_orderlineid} className="order-line order-line--read">
               <span className="order-line__name">{lineProductName(line)}</span>
               <span className="order-line__qty-read">Qty {line.poc_quantity ?? 0}</span>
             </li>
@@ -75,7 +78,12 @@ export function OrderDetail({ orderId, isAdmin, onListRefetch, onCollapse }: Ord
       )}
 
       {isAdmin && status != null && (
-        <OrderStatusControls orderId={orderId} status={status} onChanged={afterChange} />
+        <OrderStatusControls
+          orderId={orderId}
+          status={status}
+          onChanged={afterChange}
+          onDeleted={afterCancel}
+        />
       )}
 
       {canEdit && (

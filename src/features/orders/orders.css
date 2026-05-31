@@ -1,6 +1,11 @@
 .orders h2 {
-  margin: 0 0 1rem;
-  font-size: 1.2rem;
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-2xl);
+}
+
+.orders__subtitle {
+  margin: 0 0 var(--space-5);
+  font-size: var(--text-sm);
 }
 
 .orders__list {
@@ -9,27 +14,42 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .order-row {
-  border: 1px solid #e2e4e8;
-  border-radius: 10px;
-  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
+  transition: box-shadow var(--transition), border-color var(--transition);
+}
+
+.order-row:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.order-row--open {
+  border-color: var(--border-strong);
 }
 
 .order-row__summary {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  gap: var(--space-3);
+  padding: var(--space-4);
   background: none;
   border: none;
   cursor: pointer;
   text-align: left;
   font: inherit;
+  transition: background var(--transition);
+}
+
+.order-row__summary:hover {
+  background: var(--surface-2);
 }
 
 .order-row__ref {
@@ -38,11 +58,11 @@
 }
 
 .order-row__date {
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
 }
 
 .order-row__by {
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -51,92 +71,170 @@
 
 .order-row__chevron {
   margin-left: auto;
-  color: #5a5f66;
+  color: var(--text-faint);
+  transition: transform var(--transition);
 }
 
-/* --- Status badge --- */
-
-.order-badge {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  border-radius: 999px;
-  padding: 0.1rem 0.5rem;
-  border: 1px solid transparent;
+.order-row__chevron--open {
+  transform: rotate(90deg);
 }
-
-.order-badge--893960000 { color: #1d4ed8; background: #dbe6fe; border-color: #b3ccfb; } /* Submitted */
-.order-badge--893960001 { color: #0b5d1e; background: #d8f5df; border-color: #9ad6a8; } /* Approved */
-.order-badge--893960002 { color: #7a4d00; background: #fdeecd; border-color: #f0d79a; } /* Assigned */
-.order-badge--893960003 { color: #3c4043; background: #e6e8eb; border-color: #cfd3d8; } /* Fulfilled */
-.order-badge--893960004 { color: #7a2e0e; background: #fde2d4; border-color: #f0b79a; } /* Rejected */
 
 /* --- Detail --- */
 
 .order-detail {
-  padding: 0 1rem 1rem;
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  border-top: 1px solid #eceef1;
+  gap: var(--space-4);
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
 }
+
+.order-detail__loading {
+  padding: var(--space-4);
+  margin: 0;
+}
+
+/* --- Status stepper --- */
+
+.stepper {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.stepper__step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+.stepper__step:not(:last-child)::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+}
+
+.stepper__dot {
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--border-strong);
+  background: var(--surface);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.stepper__label {
+  white-space: nowrap;
+}
+
+.stepper__step--done .stepper__dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-contrast);
+}
+.stepper__step--done {
+  color: var(--text-muted);
+}
+.stepper__step--done:not(:last-child)::after {
+  background: var(--accent);
+}
+
+.stepper__step--current .stepper__dot {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-weak);
+}
+.stepper__step--current {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.stepper--rejected {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--status-rejected-fg);
+}
+
+.stepper__dot--rejected {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: var(--radius-full);
+  background: var(--status-rejected-fg);
+}
+
+/* --- Lines --- */
 
 .order-lines {
   list-style: none;
-  margin: 0.75rem 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-2);
 }
 
 .order-line {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
 }
 
 .order-line__name {
   flex: 1;
+  font-weight: 500;
 }
 
 .order-line__qty-read {
-  color: #3c4043;
+  color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 
-.order-line__qty {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.order-line__qty button {
-  width: 1.8rem;
-  padding: 0.1rem 0;
-}
-
 .order-line__remove {
-  font-size: 0.78rem;
+  font-size: var(--text-xs);
   background: none;
   border: none;
-  color: #b3261e;
+  color: var(--danger);
   cursor: pointer;
 }
-
+.order-line__remove:hover:not(:disabled) {
+  text-decoration: underline;
+}
 .order-line__remove:disabled {
-  color: #b9bcc1;
+  color: var(--text-faint);
   cursor: not-allowed;
 }
 
 .order-detail__notes {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
 }
 
 .order-detail__locked {
-  font-size: 0.85rem;
+  font-size: var(--text-sm);
   font-style: italic;
 }
 
@@ -145,37 +243,21 @@
 .order-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
   align-items: center;
 }
 
 .order-editor {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-3);
 }
 
 .order-notes {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.order-notes textarea {
-  font: inherit;
-  padding: 0.4rem 0.5rem;
-  border: 1px solid #c4c7cc;
-  border-radius: 6px;
-  resize: vertical;
+  margin-top: var(--space-1);
 }
 
 .order-editor__actions {
   display: flex;
-  gap: 0.5rem;
-}
-
-.order-cancel {
-  color: #b3261e;
+  gap: var(--space-2);
 }
