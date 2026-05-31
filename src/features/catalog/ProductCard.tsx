@@ -3,6 +3,7 @@ import type { Poc_products } from '../../generated/models/Poc_productsModel'
 import { categoryLabel } from '../../data/labels'
 import type { ProductCategory } from '../../data/labels'
 import { formatMoney } from '../../data/format'
+import { useCart } from '../cart/useCart'
 
 interface ProductCardProps {
   product: Poc_products
@@ -24,9 +25,23 @@ export function ProductCard({
   onToggleAvailability,
   busy,
 }: ProductCardProps) {
+  const { add } = useCart()
   const [imageFailed, setImageFailed] = useState(false)
+  const [qty, setQty] = useState(1)
   const available = product.poc_available ?? false
   const showImage = !!product.poc_image && !imageFailed
+
+  function handleAdd() {
+    add(
+      {
+        productId: product.poc_productid,
+        name: product.poc_product1 ?? 'Untitled product',
+        unitPrice: product.poc_unitprice ?? 0,
+      },
+      qty,
+    )
+    setQty(1)
+  }
 
   return (
     <article className={`product-card${available ? '' : ' product-card--unavailable'}`}>
@@ -54,6 +69,31 @@ export function ProductCard({
         {product.poc_description && (
           <p className="product-card__description">{product.poc_description}</p>
         )}
+
+        <div className="product-card__buy">
+          <div className="product-card__qty">
+            <button
+              type="button"
+              onClick={() => setQty((q) => Math.max(1, q - 1))}
+              aria-label="Decrease quantity"
+              disabled={!available || qty <= 1}
+            >
+              −
+            </button>
+            <span>{qty}</span>
+            <button
+              type="button"
+              onClick={() => setQty((q) => q + 1)}
+              aria-label="Increase quantity"
+              disabled={!available}
+            >
+              +
+            </button>
+          </div>
+          <button type="button" onClick={handleAdd} disabled={!available}>
+            Add
+          </button>
+        </div>
       </div>
 
       {isAdmin && (

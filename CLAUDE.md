@@ -18,7 +18,7 @@ We build through `implementation-plan.md` one phase at a time, using this loop p
 
 `office-request` ("Office request") is a **Microsoft Power Apps Code App**: a React 19 + TypeScript single-page app, built with Vite, that runs inside the Power Platform and reads/writes **Dataverse** tables through the `@microsoft/power-apps` SDK. The domain is office-supply ordering. It was scaffolded from the standard "React + TypeScript + Vite" template and then wired for Power Apps Code Apps.
 
-Build status: Phases 0–3 done — the app bootstraps the Power session (`src/power/`), has a reusable Dataverse data layer (`src/data/`), and renders the product catalog (`src/features/catalog/`). Remaining feature UI: ordering (Phase 4), order management (Phase 5), nav/polish (Phase 6). The phased build order is in `implementation-plan.md`.
+Build status: Phases 0–4 done — the app bootstraps the Power session (`src/power/`), has a reusable Dataverse data layer (`src/data/`), renders the product catalog (`src/features/catalog/`), and supports building a cart and submitting an order (`src/features/cart/`). Remaining: order management (Phase 5), nav (Phase 6), design & polish (Phase 7). The phased build order is in `implementation-plan.md`.
 
 ## Product scope & rules
 
@@ -102,7 +102,8 @@ Thin hooks/helpers over the generated services. **Components never import a `Poc
 
 Feature UI lives here, one folder per feature. A feature consumes the `src/data/` hooks + mutations only — **never** a `Poc_*Service` directly (enforced boundary). Pattern: render `{loading, error, empty, data}` states from a query hook (branch on `loading` first); on a mutation, `await` it then call the query's `refetch()`; gate admin controls behind `useIsAdmin()` (cosmetic only). Forms use React 19 form actions + `useActionState` (built-in pending/error).
 
-- **`catalog/`** (Phase 3): `Catalog.tsx` (page: grid + admin "Add product"), `ProductCard.tsx` (read-only card; admin Edit / availability-toggle footer; dimmed when unavailable), `ProductFormDialog.tsx` (native `<dialog>` add/edit via form action), `catalog.css`. Soft-delete only (`setProductAvailability`). `poc_image` is a plain URL string (with an empty/broken-image fallback), not a Dataverse image column.
+- **`catalog/`** (Phase 3): `Catalog.tsx` (page: grid + admin "Add product"), `ProductCard.tsx` (card with qty stepper + Add-to-cart; admin Edit / availability-toggle footer; dimmed when unavailable), `ProductFormDialog.tsx` (native `<dialog>` add/edit via form action), `catalog.css`. Soft-delete only (`setProductAvailability`). `poc_image` is a plain URL string (with an empty/broken-image fallback), not a Dataverse image column.
+- **`cart/`** (Phase 4): client-side cart (no Dataverse draft) following the `src/power/` provider pattern — `cartContext.ts` (+`CartItem`, an add-time snapshot of id/name/unitPrice), `CartProvider.tsx`, `useCart.ts`, `CartButton.tsx` (header, item-count badge), `CartDrawer.tsx` (slide-over: lines + qty steppers + remove, notes, total, submit), `cart.css`. Submit (in `CartDrawer`) is **not atomic**: `createOrder` (status Submitted = `893960000`, `poc_requestedby` = `user.objectId`) then one `createOrderLine` per item sequentially; on any line failure it rolls back via `deleteOrder` and keeps the cart. `<CartProvider>` wraps the shell in `App.tsx`.
 
 ### Config
 
