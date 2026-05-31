@@ -82,14 +82,29 @@ The core feature. An order = one `poc_order` header + one or more `poc_orderline
 
 ---
 
-## Phase 6 — Navigation, layout, polish
+## Phase 6 — Navigation & layout
+
+Structural wiring only — get every screen reachable and the app shell coherent. Visual craft is deferred to Phase 7 (polish a complete app, not stubs).
 
 - Role-gated nav: Catalog + My Orders for everyone; Manage Catalog + All Orders for admins (`useIsAdmin()`).
-- Consistent loading / empty / error states.
-- Basic responsive layout and accessible forms.
-- Final `npm run build` + `npm run lint` clean.
+- A consistent app-shell layout (header + nav + content) wrapping all features.
+- Consistent loading / empty / error states across screens.
+- `npm run build` + `npm run lint` clean.
 
-**Done when:** the four locked flows work end to end with role-appropriate navigation.
+**Done when:** the four locked flows are reachable and work end to end with role-appropriate navigation.
+
+---
+
+## Phase 7 — Design & polish
+
+The dedicated visual pass. Done **last, on purpose** — every feature screen (Phases 3–5) and the navigation shell (Phase 6) now exist, so we polish the *real, complete* app instead of placeholders, and one cohesive design language can be applied across all screens at once. Use the `frontend-design` skill here.
+
+- Establish a small design system: color/spacing/typography tokens + shared button/input/badge/card primitives (refactor the per-feature CSS to use them).
+- Raise visual quality across catalog, cart/order, and order-management screens: hierarchy, spacing, empty/loading/error states, hover/focus/disabled states, subtle transitions.
+- Responsive layout (mobile → desktop) and an accessibility pass (labels, focus order, keyboard nav, color contrast, dialog focus-trap).
+- Stay plain-CSS / no heavy UI dependency unless the user opts in; keep within `project-scope.md`.
+
+**Done when:** the app looks production-grade and consistent across every screen and breakpoint, and `npm run build` + `npm run lint` are clean.
 
 ---
 
@@ -97,4 +112,4 @@ The core feature. An order = one `poc_order` header + one or more `poc_orderline
 
 - **Security reminder:** because "own orders" is filtered by `poc_requestedby` (not row owner), make sure Dataverse read permissions actually restrict users to their rows — UI filtering alone is not security. Confirm with the security role config. (See the caveat in `project-scope.md`.)
 - **No tests configured** — verify by running the app (`npm run dev`) per phase. Add a test runner only if scope grows.
-- **Suggested ordering if time-boxed:** 0 → 1 → 2 → 3 → 4 → 5 → 6. Phases 3 and 4 are the most user-visible; Phase 1's role spike is the main unknown — resolve it early.
+- **Suggested ordering if time-boxed:** 0 → 1 → 2 → 3 → 4 → 5 → 6 → 7. Phases 3 and 4 are the most user-visible; Phase 1's role spike is the main unknown — resolve it early. Phase 7 (design & polish) is deliberately last so it operates on the complete app; do per-phase styling only "good enough", then make it cohesive in 7.
