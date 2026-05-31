@@ -1,7 +1,8 @@
-import { useActionState, useEffect, useRef } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { useCurrentUser } from '../../power/useCurrentUser'
 import { createOrder, createOrderLine, deleteOrder } from '../../data/mutations'
 import { formatMoney } from '../../data/format'
+import { STATUS_SUBMITTED } from '../../data/labels'
 import { useCart } from './useCart'
 import './cart.css'
 
@@ -10,35 +11,50 @@ interface CartDrawerProps {
   onClose: () => void
 }
 
-// Submitted status code (see src/data/labels.ts ORDER_STATUS_FLOW).
-const STATUS_SUBMITTED = 893960000
-
 type SubmitResult =
   | { kind: 'error'; message: string }
   | { kind: 'success'; ref: string; itemCount: number }
   | null
 
 /**
- * Slide-over cart panel. Lists lines with quantity steppers + remove, an order
- * notes field, the total, and a submit that creates the order header + one line
- * per item (see the non-atomic algorithm below). On success it shows a
- * confirmation, then clears the cart and closes.
+ * Slide-over cart panel. The inner panel holds the submit state machine; the
+ * outer wrapper remounts it (via `sessionKey`, bumped on close) so a prior
+ * submit's success confirmation never lingers into the next session
+ * (useActionState can't be reset directly). Cart items live in CartProvider, so
+ * the remount doesn't lose them.
  */
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
+  const [sessionKey, setSessionKey] = useState(0)
+
+  const handleClose = () => {
+    setSessionKey((k) => k + 1)
+    onClose()
+  }
+
+  if (!open) return null
+  return <CartDrawerPanel key={sessionKey} onClose={handleClose} />
+}
+
+/**
+ * One cart session: lists lines with quantity steppers + remove, an order notes
+ * field, the total, and a submit that creates the order header + one line per
+ * item (non-atomic — see below). On success it shows a confirmation; closing
+ * remounts a fresh panel for the next session.
+ */
+function CartDrawerPanel({ onClose }: { onClose: () => void }) {
   const { items, count, subtotal, setQuantity, remove, clear } = useCart()
   const { user } = useCurrentUser()
   const closeRef = useRef<HTMLButtonElement>(null)
 
-  // Esc to close + focus the close button when opened (plain-div dialog a11y).
+  // Esc to close + focus the close button on open (plain-div dialog a11y).
   useEffect(() => {
-    if (!open) return
     closeRef.current?.focus()
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+  }, [onClose])
 
   const [result, submitAction, isPending] = useActionState<SubmitResult, FormData>(
     async (_prev, formData) => {
@@ -87,8 +103,6 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
     },
     null,
   )
-
-  if (!open) return null
 
   return (
     <div className="cart-overlay" onClick={onClose}>

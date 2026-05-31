@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Poc_orderlines } from '../../generated/models/Poc_orderlinesModel'
 import type { MutationResult } from '../../data/types'
+import { lineProductName } from './orderLineName'
 import {
   deleteOrder,
   deleteOrderLine,
@@ -52,7 +53,7 @@ export function OrderLineEditor({
           const qty = line.poc_quantity ?? 1
           return (
             <li key={line.poc_orderlineid} className="order-line">
-              <span className="order-line__name">{line.poc_productname ?? 'Product'}</span>
+              <span className="order-line__name">{lineProductName(line)}</span>
               <div className="order-line__qty">
                 <button
                   type="button"

@@ -4,6 +4,7 @@ import { STATUS_SUBMITTED, statusLabel } from '../../data/labels'
 import type { OrderStatus } from '../../data/labels'
 import { OrderStatusControls } from './OrderStatusControls'
 import { OrderLineEditor } from './OrderLineEditor'
+import { lineProductName } from './orderLineName'
 
 interface OrderDetailProps {
   orderId: string
@@ -59,7 +60,7 @@ export function OrderDetail({ orderId, isAdmin, onListRefetch, onCollapse }: Ord
           {lines.length === 0 && <li className="muted">This order has no items.</li>}
           {lines.map((line) => (
             <li key={line.poc_orderlineid} className="order-line">
-              <span className="order-line__name">{line.poc_productname ?? 'Product'}</span>
+              <span className="order-line__name">{lineProductName(line)}</span>
               <span className="order-line__qty-read">Qty {line.poc_quantity ?? 0}</span>
             </li>
           ))}
